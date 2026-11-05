@@ -9,7 +9,7 @@ everything_everything_pp = <<-MANIFEST
           'location' => 'http://apt.puppetlabs.com',
           'repos'    => 'main',
           'key'      => {
-            'id'     => '6F6B15509CF8E59E6E469F327F438280EF8D349F',
+            'id'     => 'D6811ED3ADEEB8441AF5AA8F4528B6CD9E61EF26',
             'server' => 'keyserver.ubuntu.com',
           },
         },
@@ -40,9 +40,16 @@ describe 'apt class' do
 
   context 'with all the things' do
     it 'works with no errors' do
-      # Apply the manifest (Retry if timeout error is received from key pool)
-      retry_on_error_matching do
-        apply_manifest(everything_everything_pp, catch_failures: true)
+      if apt_key_available?
+        # Apply the manifest (Retry if timeout error is received from key pool)
+        retry_on_error_matching do
+          apply_manifest(everything_everything_pp, catch_failures: true)
+        end
+      else
+        # apt-key was removed in apt 3; the key id in this manifest needs it
+        apply_manifest(everything_everything_pp, expect_failures: true) do |r|
+          expect(r.stderr).to match(%r{apt-key command is not available.*apt::keyring})
+        end
       end
     end
 

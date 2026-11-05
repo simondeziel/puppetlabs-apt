@@ -50,6 +50,8 @@ describe 'apt::ppa' do
     'ppa:foo/bar1.0',
     'ppa:foo10/bar10',
     'ppa:foo-/bar_',
+    'ppa:foo/bar+',
+    'ppa:foo+/bar',
   ].each do |value|
     describe 'valid resource names' do
       let :facts do
@@ -83,6 +85,7 @@ describe 'apt::ppa' do
     'ppa:foo/bar/foobar',
     '|| ls -la ||',
     '|| touch /tmp/foo.txt ||',
+    'ppa:foo/bar`reboot`',
   ].each do |value|
     describe 'invalid resource names' do
       let :facts do

@@ -38,6 +38,23 @@ apt_conf_d = {    ensure: 'directory',
                   recurse: false,
                   notify: 'Class[Apt::Update]' }
 
+auth_conf_d = {   ensure: 'directory',
+                  path: '/etc/apt/auth.conf.d',
+                  owner: 'root',
+                  group: 'root',
+                  purge: false,
+                  recurse: false,
+                  notify: 'Class[Apt::Update]' }
+
+keyrings = {      ensure: 'directory',
+                  path: '/etc/apt/keyrings',
+                  owner: 'root',
+                  group: 'root',
+                  mode: '0755',
+                  purge: false,
+                  recurse: false,
+                  notify: 'Class[Apt::Update]' }
+
 describe 'apt' do
   let(:facts) do
     {
@@ -75,6 +92,14 @@ describe 'apt' do
 
     it {
       expect(subject).to contain_file('apt.conf.d').that_notifies('Class[Apt::Update]').only_with(apt_conf_d)
+    }
+
+    it {
+      is_expected.to contain_file('auth.conf.d').that_notifies('Class[Apt::Update]').only_with(auth_conf_d)
+    }
+
+    it {
+      is_expected.to contain_file('keyrings').that_notifies('Class[Apt::Update]').only_with(keyrings)
     }
 
     it { is_expected.to contain_file('/etc/apt/auth.conf').with_ensure('absent') }
@@ -240,7 +265,7 @@ describe 'apt' do
         update: { 'frequency' => 'always', 'timeout' => 1, 'tries' => 3 },
         purge: { 'sources.list' => false, 'sources.list.d' => false,
                  'preferences' => false, 'preferences.d' => false,
-                 'apt.conf.d' => false }
+                 'apt.conf.d' => false, 'keyrings' => false }
       }
     end
 
@@ -268,6 +293,11 @@ describe 'apt' do
     }
 
     it {
+      expect(subject).to contain_file('keyrings').with(purge: false,
+                                                       recurse: false)
+    }
+
+    it {
       expect(subject).to contain_exec('apt_update').with(refreshonly: false,
                                                          timeout: 1,
                                                          tries: 3)
@@ -280,7 +310,7 @@ describe 'apt' do
         update: { 'frequency' => 'always', 'timeout' => 1, 'tries' => 3 },
         purge: { 'sources.list' => true, 'sources.list.d' => true,
                  'preferences' => true, 'preferences.d' => true,
-                 'apt.conf.d' => true }
+                 'apt.conf.d' => true, 'keyrings' => true }
       }
     end
 
@@ -305,6 +335,11 @@ describe 'apt' do
     it {
       expect(subject).to contain_file('apt.conf.d').with(purge: true,
                                                          recurse: true)
+    }
+
+    it {
+      expect(subject).to contain_file('keyrings').with(purge: true,
+                                                       recurse: true)
     }
 
     it {
@@ -357,6 +392,48 @@ describe 'apt' do
             id: 'Ubuntu'
           }
         }
+      },
+      'Ubuntu 22.04' => {
+        os: {
+          family: 'Debian',
+          name: 'Ubuntu',
+          release: {
+            major: '22.04',
+            full: '22.04'
+          },
+          distro: {
+            codename: 'jammy',
+            id: 'Ubuntu'
+          }
+        }
+      },
+      'Ubuntu 24.04' => {
+        os: {
+          family: 'Debian',
+          name: 'Ubuntu',
+          release: {
+            major: '24.04',
+            full: '24.04'
+          },
+          distro: {
+            codename: 'noble',
+            id: 'Ubuntu'
+          }
+        }
+      },
+      'Ubuntu 26.04' => {
+        os: {
+          family: 'Debian',
+          name: 'Ubuntu',
+          release: {
+            major: '26.04',
+            full: '26.04',
+          },
+          distro: {
+            codename: 'resolute',
+            id: 'Ubuntu',
+          },
+        },
       },
       'Debian 9.0' => {
         os: {
@@ -707,6 +784,14 @@ describe 'apt' do
 
     context "with purge['apt.conf.d']=>'banana'" do
       let(:params) { { purge: { 'apt.conf.d' => 'banana' } } }
+
+      it do
+        expect(subject).to raise_error(Puppet::Error)
+      end
+    end
+
+    context "with purge['keyrings']=>'banana'" do
+      let(:params) { { purge: { 'keyrings' => 'banana' } } }
 
       it do
         expect(subject).to raise_error(Puppet::Error)
